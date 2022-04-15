@@ -1,6 +1,11 @@
-export enum QoiColorSpace {
+export enum QOIColorSpace {
   SRGB = 0,
   Linear = 1,
+}
+
+export enum QOIChannels {
+  RGB = 3,
+  RGBA = 4,
 }
 
 type addonType = {
@@ -8,15 +13,15 @@ type addonType = {
     pixels: Buffer,
     width: number,
     height: number,
-    channels: number,
-    colorSpace: QoiColorSpace,
+    channels: QOIChannels,
+    colorSpace: QOIColorSpace,
   ) => Buffer;
   decode: (data: Buffer) => {
     pixels: Buffer;
     width: number;
     height: number;
-    channels: number;
-    colorSpace: QoiColorSpace;
+    channels: QOIChannels;
+    colorSpace: QOIColorSpace;
   };
 };
 
@@ -29,8 +34,8 @@ export function QOIencode(
   options: {
     width: number;
     height: number;
-    channels: number;
-    colorSpace?: QoiColorSpace;
+    channels: QOIChannels;
+    colorSpace?: QOIColorSpace;
   },
 ): Buffer {
   return addon.encode(
@@ -38,7 +43,7 @@ export function QOIencode(
     options.width,
     options.height,
     options.channels,
-    options.colorSpace || QoiColorSpace.SRGB,
+    options.colorSpace || QOIColorSpace.SRGB,
   );
 }
 
