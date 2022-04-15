@@ -1,0 +1,22 @@
+{
+  "name": "qoi-img",
+  "version": "0.1.0",
+  "description": "Typescript bindings for QOI",
+  "main": "dist/index.js",
+  "author": "Rubikscraft <contact@rubikscraft.nl>",
+  "license": "GPL-3.0",
+  "scripts": {
+    "build-gyp": "node-gyp configure build",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "full": "yarn build && yarn build-gyp && yarn start"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.24",
+    "node-gyp": "^9.0.0",
+    "typescript": "^4.6.3"
+  },
+  "dependencies": {
+    "bindings": "^1.5.0"
+  }
+}
