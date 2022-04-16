@@ -18,21 +18,22 @@ function QOIEncode: (
     width: number,
     height: number,
     channels: QOIChannels,
-    colorSpace: QOIColorSpace,
+    colorspace: QOIColorSpace,
   ) => Buffer;
 ```
 
 ### Decoding
 
 Decoding is just as easy. You can decode an image by using the `QOIDecode` function.
+You can also convert the image to either RGB or RGBA by setting the convertChannels parameter.
 
 ```js
-function QOIDecode(data: Buffer) => {
+function QOIDecode(data: Buffer, convertChannels?: QOIChannels) => {
     pixels: Buffer;
     width: number;
     height: number;
     channels: QOIChannels;
-    colorSpace: QOIColorSpace;
+    colorspace: QOIColorSpace;
   }
 ```
 
@@ -49,3 +50,8 @@ export enum QOIChannels {
   RGBA = 4,
 }
 ```
+
+## Release notes
+
+* [v1.1.0] - Add RGB/RGBA conversion, add tests
+* [v1.0.0] - Initial release

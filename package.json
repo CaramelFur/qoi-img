@@ -1,6 +1,6 @@
 {
   "name": "qoi-img",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Typescript bindings for QOI",
   "repository": "https://github.com/rubikscraft/qoi-img",
   "author": "Rubikscraft <contact@rubikscraft.nl>",
@@ -16,7 +16,9 @@
     "image",
     "quite ok image",
     "encoding",
-    "decoding"
+    "decoding",
+    "backend",
+    "quite ok"
   ],
   "readme": "README.md",
   "main": "dist/index.js",
@@ -27,11 +29,16 @@
     "build-tsc": "tsc",
     "build": "yarn run build-gyp && yarn run build-tsc",
     "start": "node dist/index.js",
-    "full": "yarn build && yarn start"
+    "build-start": "yarn build && yarn start",
+    "test": "jest"
   },
   "devDependencies": {
+    "@types/jest": "^27.4.1",
     "@types/node": "^17.0.24",
+    "babel-jest": "^27.5.1",
+    "jest": "^27.5.1",
     "node-gyp": "^9.0.0",
+    "ts-jest": "^27.1.4",
     "typescript": "^4.6.3"
   },
   "dependencies": {

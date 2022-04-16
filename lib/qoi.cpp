@@ -77,15 +77,16 @@ namespace qoi_node
   }
 
   // First argument is a Buffer
+  // Second argument is channels override (0, 3, 4)
   napi_value Decode(napi_env env, napi_callback_info args)
   {
     uint32_t status;
 
-    napi_value argv[1];
-    size_t argc = 1;
+    napi_value argv[2];
+    size_t argc = 2;
     status = napi_get_cb_info(env, args, &argc, argv, nullptr, nullptr);
 
-    if (status != napi_ok || argc != 1)
+    if (status != napi_ok || argc != 2)
     {
       napi_throw_error(env, nullptr, "Invalid argument count");
       return nullptr;
@@ -93,8 +94,11 @@ namespace qoi_node
 
     uint8_t *pixels;
     size_t pixels_length;
+    uint32_t channels = 0;
 
     status = napi_get_buffer_info(env, argv[0], (void **)&pixels, &pixels_length);
+    status += napi_get_value_uint32(env, argv[1], &channels);
+
     if (status != napi_ok)
     {
       napi_throw_error(env, nullptr, "Invalid argument type");
@@ -104,7 +108,7 @@ namespace qoi_node
     std::pair<std::vector<std::byte>, qoixx::qoi::desc> image;
     try
     {
-      image = qoixx::qoi::decode<std::vector<std::byte>>(pixels, pixels_length);
+      image = qoixx::qoi::decode<std::vector<std::byte>>(pixels, pixels_length, (uint8_t)channels);
     }
     catch (const std::exception &e)
     {

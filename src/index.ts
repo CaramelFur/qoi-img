@@ -14,14 +14,17 @@ type addonType = {
     width: number,
     height: number,
     channels: QOIChannels,
-    colorSpace: QOIColorSpace,
+    colorspace: QOIColorSpace,
   ) => Buffer;
-  decode: (data: Buffer) => {
+  decode: (
+    data: Buffer,
+    channels: number,
+  ) => {
     pixels: Buffer;
     width: number;
     height: number;
     channels: QOIChannels;
-    colorSpace: QOIColorSpace;
+    colorspace: QOIColorSpace;
   };
 };
 
@@ -35,7 +38,7 @@ export function QOIencode(
     width: number;
     height: number;
     channels: QOIChannels;
-    colorSpace?: QOIColorSpace;
+    colorspace?: QOIColorSpace;
   },
 ): Buffer {
   return addon.encode(
@@ -43,11 +46,25 @@ export function QOIencode(
     options.width,
     options.height,
     options.channels,
-    options.colorSpace || QOIColorSpace.SRGB,
+    options.colorspace || QOIColorSpace.SRGB,
   );
 }
 
-export const QOIdecode = addon.decode;
+export function QOIdecode(
+  data: Buffer,
+  convertChannels?: QOIChannels,
+): {
+  pixels: Buffer;
+  width: number;
+  height: number;
+  channels: QOIChannels;
+  colorspace: QOIColorSpace;
+} {
+  const result = addon.decode(data, convertChannels || 0);
+  if (convertChannels !== undefined) result.channels = convertChannels;
+
+  return result;
+}
 
 export function IsQOI(data: Buffer): boolean {
   return (
