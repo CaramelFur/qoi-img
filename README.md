@@ -40,12 +40,12 @@ function QOIDecode(data: Buffer, convertChannels?: QOIChannels) => {
 ### Enums
 
 ```js
-export enum QOIColorSpace {
+enum QOIColorSpace {
   SRGB = 0,
   Linear = 1,
 }
 
-export enum QOIChannels {
+enum QOIChannels {
   RGB = 3,
   RGBA = 4,
 }
@@ -53,5 +53,7 @@ export enum QOIChannels {
 
 ## Release notes
 
-* [v1.1.0] - Add RGB/RGBA conversion, add tests
-* [v1.0.0] - Initial release
+* [v1.1.0]
+  * Add RGB/RGBA conversion, add tests
+* [v1.0.0]
+  * Initial release
