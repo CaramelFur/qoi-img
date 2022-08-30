@@ -1,6 +1,6 @@
 {
   "name": "qoi-img",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Typescript bindings for QOI",
   "repository": "https://github.com/rubikscraft/qoi-img",
   "author": "Rubikscraft <contact@rubikscraft.nl>",
@@ -42,6 +42,7 @@
     "typescript": "^4.8.2"
   },
   "dependencies": {
-    "bindings": "^1.5.0"
+    "bindings": "^1.5.0",
+    "node-gyp": "^9.1.0"
   }
 }
