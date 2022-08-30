@@ -53,6 +53,9 @@ enum QOIChannels {
 
 ## Release notes
 
+* [v1.2.0]
+  * Update dependencies
+  * Remove building with `-march=native`
 * [v1.1.0]
   * Add RGB/RGBA conversion, add tests
 * [v1.0.0]
