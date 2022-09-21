@@ -2,9 +2,15 @@
 #include <node_api.h>
 
 #include "qoixx.hpp"
+#include "sqoi.h"
 
 namespace qoi_node
 {
+  static void finalize_data(napi_env env, void *data, void *hint)
+  {
+    free(data);
+  }
+
   // First argument is a Buffer
   // Second argument is width
   // Third argument is height
@@ -154,11 +160,125 @@ namespace qoi_node
     return result_desc;
   }
 
+  // First argument is width
+  // Second argument is height
+  // Third argument is channels
+  // Fourth argument is colorspace
+  napi_value CreateStreamDescription(napi_env env, napi_callback_info args)
+  {
+    // modify every byte in the stream by adding 2 to it
+    uint32_t status;
+
+    napi_value argv[4];
+    size_t argc = 4;
+    status = napi_get_cb_info(env, args, &argc, argv, nullptr, nullptr);
+
+    if (status != napi_ok || argc != 4)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument count");
+      return nullptr;
+    }
+
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint32_t channels = 0;
+    uint32_t colorspace = 0;
+
+    status += napi_get_value_uint32(env, argv[0], &width);
+    status += napi_get_value_uint32(env, argv[1], &height);
+    status += napi_get_value_uint32(env, argv[2], &channels);
+    status += napi_get_value_uint32(env, argv[3], &colorspace);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument type");
+      return nullptr;
+    }
+
+    qoi_desc_t *desc = (qoi_desc_t *)malloc(sizeof(qoi_desc_t));
+    desc->width = width;
+    desc->height = height;
+    desc->channels = channels;
+    desc->colorspace = colorspace;
+
+    napi_value result;
+    status = napi_create_external(env, desc, finalize_data, nullptr, &result);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Failed to create result");
+      return nullptr;
+    }
+
+    return result;
+  }
+
+  // No arguments
+  napi_value CreateEncodeState(napi_env env, napi_callback_info args)
+  {
+    // modify every byte in the stream by adding 2 to it
+    uint32_t status;
+
+    size_t argc = 0;
+    status = napi_get_cb_info(env, args, &argc, nullptr, nullptr, nullptr);
+
+    if (status != napi_ok || argc != 0)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument count");
+      return nullptr;
+    }
+
+    qoi_enc_t *state = (qoi_enc_t *)malloc(sizeof(qoi_enc_t));
+
+    napi_value result;
+    status = napi_create_external(env, state, finalize_data, nullptr, &result);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Failed to create result");
+      return nullptr;
+    }
+
+    return result;
+  }
+
+  // No Arguments
+  napi_value CreateDecodeState(napi_env env, napi_callback_info args)
+  {
+    // modify every byte in the stream by adding 2 to it
+    uint32_t status;
+
+    size_t argc = 0;
+    status = napi_get_cb_info(env, args, &argc, nullptr, nullptr, nullptr);
+
+    if (status != napi_ok || argc != 0)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument count");
+      return nullptr;
+    }
+
+    qoi_dec_t *state = (qoi_dec_t *)malloc(sizeof(qoi_dec_t));
+
+    napi_value result;
+    status = napi_create_external(env, state, finalize_data, nullptr, &result);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Failed to create result");
+      return nullptr;
+    }
+
+    return result;
+  }
+
   napi_value init(napi_env env, napi_value exports)
   {
     napi_status status;
     napi_value encode;
     napi_value decode;
+    napi_value create_stream_description;
+    napi_value create_encode_state;
+    napi_value create_decode_state;
 
     status = napi_create_function(env, nullptr, 0, Encode, nullptr, &encode);
     if (status != napi_ok)
@@ -173,6 +293,30 @@ namespace qoi_node
       return nullptr;
 
     status = napi_set_named_property(env, exports, "decode", decode);
+    if (status != napi_ok)
+      return nullptr;
+
+    status = napi_create_function(env, nullptr, 0, CreateStreamDescription, nullptr, &create_stream_description);
+    if (status != napi_ok)
+      return nullptr;
+
+    status = napi_set_named_property(env, exports, "create_stream_description", create_stream_description);
+    if (status != napi_ok)
+      return nullptr;
+
+    status = napi_create_function(env, nullptr, 0, CreateEncodeState, nullptr, &create_encode_state);
+    if (status != napi_ok)
+      return nullptr;
+
+    status = napi_set_named_property(env, exports, "create_encode_state", create_encode_state);
+    if (status != napi_ok)
+      return nullptr;
+
+    status = napi_create_function(env, nullptr, 0, CreateDecodeState, nullptr, &create_decode_state);
+    if (status != napi_ok)
+      return nullptr;
+
+    status = napi_set_named_property(env, exports, "create_decode_state", create_decode_state);
     if (status != napi_ok)
       return nullptr;
 
