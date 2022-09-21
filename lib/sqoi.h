@@ -127,8 +127,7 @@ extern "C"
 
     size_t pixel_offset, len;
 
-    uint8_t *data;
-    uint8_t *offset;
+    size_t offset;
 
     uint8_t run : 8;
     uint32_t pad : 24;
@@ -149,8 +148,7 @@ extern "C"
 
     size_t pixel_seek, img_area, qoi_len;
 
-    uint8_t *data;
-    uint8_t *offset;
+    size_t offset;
 
     uint8_t run : 8;
     uint32_t pad : 24;
@@ -180,7 +178,7 @@ extern "C"
   void qoi_set_channels(qoi_desc_t *desc, uint8_t channels);
   void qoi_set_colorspace(qoi_desc_t *desc, uint8_t colorspace);
 
-  bool read_qoi_header(qoi_desc_t *desc, void *data);
+  bool read_qoi_header(qoi_desc_t *desc, void *data, size_t size);
 
   /* QOI decoder functions */
 
@@ -291,9 +289,9 @@ extern "C"
   }
 
   /* Writes the QOI metadata information to the file */
-  void write_qoi_header(qoi_desc_t *desc, void *dest)
+  void write_qoi_header(qoi_desc_t *desc, void *dest, size_t size)
   {
-    if (dest == NULL || desc == NULL)
+    if (dest == NULL || desc == NULL || size < 14)
       return;
 
     uint8_t *byte = (uint8_t *)dest;
@@ -331,9 +329,9 @@ extern "C"
   }
 
   /* Check for vaild QOIF file */
-  bool read_qoi_header(qoi_desc_t *desc, void *data)
+  bool read_qoi_header(qoi_desc_t *desc, void *data, size_t size)
   {
-    if (data == NULL || desc == NULL)
+    if (data == NULL || desc == NULL || size < 14)
       return false;
 
     uint8_t *byte = (uint8_t *)data;
@@ -361,9 +359,9 @@ extern "C"
   }
 
   /* Initalize the QOI encoder to the default state */
-  bool qoi_enc_init(qoi_desc_t *desc, qoi_enc_t *enc, void *data)
+  bool qoi_enc_init(qoi_desc_t *desc, qoi_enc_t *enc)
   {
-    if (enc == NULL || desc == NULL || data == NULL)
+    if (enc == NULL || desc == NULL)
       return false;
 
     for (uint8_t element = 0; element < 64; element++)
@@ -382,8 +380,7 @@ extern "C"
     */
     qoi_set_pixel_rgba(&enc->prev_pixel, 0, 0, 0, 255);
 
-    enc->data = (uint8_t *)data;
-    enc->offset = enc->data + 14;
+    enc->offset = 14;
 
     return true;
   }
@@ -395,9 +392,9 @@ extern "C"
   }
 
   /* Initalize the decoder to the default state */
-  bool qoi_dec_init(qoi_desc_t *desc, qoi_dec_t *dec, void *data, size_t len)
+  bool qoi_dec_init(qoi_desc_t *desc, qoi_dec_t *dec)
   {
-    if (dec == NULL || data == NULL || len < 14)
+    if (dec == NULL || desc == NULL)
       return false;
 
     /*
@@ -414,10 +411,9 @@ extern "C"
 
     dec->pixel_seek = 0;
     dec->img_area = (size_t)desc->width * (size_t)desc->height;
-    dec->qoi_len = len;
+    dec->qoi_len = 14 + desc->width * desc->height * desc->channels + 8;
 
-    dec->data = (uint8_t *)data;
-    dec->offset = dec->data + 14;
+    dec->offset = 14;
 
     return true;
   }
@@ -425,7 +421,7 @@ extern "C"
   /* Has the decoder reached the end of file? */
   bool qoi_dec_done(qoi_dec_t *dec)
   {
-    return ((size_t)(dec->offset - dec->data) > dec->qoi_len - 8) || (dec->pixel_seek >= dec->img_area);
+    return (dec->offset > dec->qoi_len - 8) || (dec->pixel_seek >= dec->img_area);
   }
 
   /*
