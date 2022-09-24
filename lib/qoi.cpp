@@ -221,26 +221,177 @@ namespace qoi_node
     return result;
   }
 
-  // No Arguments
+  // First argument is channel override
   napi_value CreateDecodeState(napi_env env, napi_callback_info args)
   {
     // modify every byte in the stream by adding 2 to it
     uint32_t status;
 
-    size_t argc = 0;
-    status = napi_get_cb_info(env, args, &argc, nullptr, nullptr, nullptr);
+    napi_value argv[1];
+    size_t argc = 1;
+    status = napi_get_cb_info(env, args, &argc, argv, nullptr, nullptr);
 
-    if (status != napi_ok || argc != 0)
+    if (status != napi_ok || argc != 1)
     {
       napi_throw_error(env, nullptr, "Invalid argument count");
       return nullptr;
     }
 
+    uint32_t channels = 0;
+    status += napi_get_value_uint32(env, argv[0], &channels);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument type");
+      return nullptr;
+    }
+
+    if (channels != 0 && channels != 3 && channels != 4)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument value");
+      return nullptr;
+    }
+
     qois_dec_state *state = (qois_dec_state *)malloc(sizeof(qois_dec_state));
-    qois_dec_state_init(state);
+    qois_dec_state_init(state, (uint8_t)channels);
 
     napi_value result;
     status = napi_create_external(env, state, finalize_data, nullptr, &result);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Failed to create result");
+      return nullptr;
+    }
+
+    return result;
+  }
+
+  // First argument is the state
+  template <typename T>
+  napi_value ReadGenericState(napi_env env, napi_callback_info args)
+  {
+    uint32_t status;
+
+    napi_value argv[1];
+    size_t argc = 1;
+    status = napi_get_cb_info(env, args, &argc, argv, nullptr, nullptr);
+
+    if (status != napi_ok || argc != 1)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument count");
+      return nullptr;
+    }
+
+    T *state;
+    status = napi_get_value_external(env, argv[0], (void **)&state);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument type");
+      return nullptr;
+    }
+
+    napi_value result_state;
+    napi_value result_width;
+    napi_value result_height;
+    napi_value result_channels;
+    napi_value result_colorspace;
+
+    status += napi_create_uint32(env, (uint32_t)state->state, &result_state);
+    status += napi_create_uint32(env, state->desc.width, &result_width);
+    status += napi_create_uint32(env, state->desc.height, &result_height);
+    status += napi_create_uint32(env, (uint32_t)state->desc.channels, &result_channels);
+    status += napi_create_uint32(env, (uint32_t)state->desc.colorspace, &result_colorspace);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Failed to create result");
+      return nullptr;
+    }
+
+    napi_value result;
+    status += napi_create_object(env, &result);
+    status += napi_set_named_property(env, result, "state", result_state);
+    status += napi_set_named_property(env, result, "width", result_width);
+    status += napi_set_named_property(env, result, "height", result_height);
+    status += napi_set_named_property(env, result, "channels", result_channels);
+    status += napi_set_named_property(env, result, "colorspace", result_colorspace);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Failed to create result");
+      return nullptr;
+    }
+
+    return result;
+  }
+
+  // First argument is the state
+  napi_value ReadEncodeState(napi_env env, napi_callback_info args)
+  {
+    return ReadGenericState<qois_enc_state>(env, args);
+  }
+
+  // First argument is the state
+  napi_value ReadDecodeState(napi_env env, napi_callback_info args)
+  {
+    return ReadGenericState<qois_dec_state>(env, args);
+  }
+
+  // First argument is an encode state external
+  // Second argument is a buffer of pixels
+  napi_value StreamEncode(napi_env env, napi_callback_info args)
+  {
+    // modify every byte in the stream by adding 2 to it
+    uint32_t status;
+
+    napi_value argv[2];
+    size_t argc = 2;
+    status = napi_get_cb_info(env, args, &argc, argv, nullptr, nullptr);
+
+    if (status != napi_ok || argc != 2)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument count");
+      return nullptr;
+    }
+
+    qois_enc_state *state;
+    uint8_t *bytes;
+    size_t bytes_length;
+
+    status += napi_get_value_external(env, argv[0], (void **)(&state));
+    status += napi_get_buffer_info(env, argv[1], (void **)(&bytes), &bytes_length);
+
+    if (status != napi_ok)
+    {
+      napi_throw_error(env, nullptr, "Invalid argument type");
+      return nullptr;
+    }
+
+    // create vector
+    std::vector<uint8_t> pixels(bytes_length);
+    size_t position = 0;
+
+    for (size_t i = 0; i < bytes_length; i++)
+    {
+      size_t remaining = pixels.size() - position;
+      int written = qois_encode_byte(state, bytes[i], pixels.data() + position, remaining);
+      if (written < 0)
+      {
+        napi_throw_error(env, nullptr, "Failed to encode");
+        return nullptr;
+      }
+      position += written;
+
+      if (remaining < 0xff)
+      {
+        pixels.resize(pixels.size() + bytes_length - 1);
+      }
+    }
+
+    napi_value result;
+    status = napi_create_buffer_copy(env, position, pixels.data(), nullptr, &result);
 
     if (status != napi_ok)
     {
@@ -296,73 +447,12 @@ namespace qoi_node
       }
       position += written;
 
-      if (remaining < 0xff) {
+      if (remaining < 0xff)
+      {
         pixels.resize(pixels.size() + (bytes_length - i) * 4);
       }
     }
-    
-    napi_value result;
-    status = napi_create_buffer_copy(env, position, pixels.data(), nullptr, &result);
 
-    if (status != napi_ok)
-    {
-      napi_throw_error(env, nullptr, "Failed to create result");
-      return nullptr;
-    }
-
-    return result;
-  }
-
-  // First argument is an encode state external
-  // Second argument is a buffer of pixels
-  napi_value StreamEncode(napi_env env, napi_callback_info args)
-  {
-    // modify every byte in the stream by adding 2 to it
-    uint32_t status;
-
-    napi_value argv[2];
-    size_t argc = 2;
-    status = napi_get_cb_info(env, args, &argc, argv, nullptr, nullptr);
-
-    if (status != napi_ok || argc != 2)
-    {
-      napi_throw_error(env, nullptr, "Invalid argument count");
-      return nullptr;
-    }
-
-    qois_enc_state *state;
-    uint8_t *bytes;
-    size_t bytes_length;
-
-    status += napi_get_value_external(env, argv[0], (void **)(&state));
-    status += napi_get_buffer_info(env, argv[1], (void **)(&bytes), &bytes_length);
-
-    if (status != napi_ok)
-    {
-      napi_throw_error(env, nullptr, "Invalid argument type");
-      return nullptr;
-    }
-
-    // create vector
-    std::vector<uint8_t> pixels(bytes_length);
-    size_t position = 0;
-
-    for (size_t i = 0; i < bytes_length; i++)
-    {
-      size_t remaining = pixels.size() - position;
-      int written = qois_encode_byte(state, bytes[i], pixels.data() + position, remaining);
-      if (written < 0)
-      {
-        napi_throw_error(env, nullptr, "Failed to encode");
-        return nullptr;
-      }
-      position += written;
-
-      if (remaining < 0xff) {
-        pixels.resize(pixels.size() + bytes_length - 1);
-      }
-    }
-    
     napi_value result;
     status = napi_create_buffer_copy(env, position, pixels.data(), nullptr, &result);
 
@@ -383,8 +473,10 @@ namespace qoi_node
     NAPI_EXPORT(Decode, decode);
     NAPI_EXPORT(CreateEncodeState, createEncodeState);
     NAPI_EXPORT(CreateDecodeState, createDecodeState);
-    NAPI_EXPORT(StreamDecode, streamDecode);
+    NAPI_EXPORT(ReadEncodeState, readEncodeState);
+    NAPI_EXPORT(ReadDecodeState, readDecodeState);
     NAPI_EXPORT(StreamEncode, streamEncode);
+    NAPI_EXPORT(StreamDecode, streamDecode);
 
     return exports;
   }
