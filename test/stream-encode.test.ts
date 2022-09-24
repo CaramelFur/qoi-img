@@ -10,12 +10,12 @@ const rgb_raw = readFileSync('./test/resources/rgb_image.rgb');
 const rgba_raw = readFileSync('./test/resources/rgba_image.rgb');
 
 test('Stream encode RGB qoi file', async () => {
-  const encoder = new QOIEncoder(
-    Image.width,
-    Image.height,
-    QOIChannels.RGB,
-    QOIColorSpace.SRGB,
-  );
+  const encoder = new QOIEncoder({
+    channels: QOIChannels.RGB,
+    width: Image.width,
+    height: Image.height,
+    colorspace: QOIColorSpace.SRGB,
+  });
 
   const inputStream = Streamify(rgb_raw);
   const outputStream = inputStream.pipe(encoder);
@@ -25,12 +25,12 @@ test('Stream encode RGB qoi file', async () => {
 });
 
 test('Stream encode RGB qoi file', async () => {
-  const encoder = new QOIEncoder(
-    Image.width,
-    Image.height,
-    QOIChannels.RGBA,
-    QOIColorSpace.SRGB,
-  );
+  const encoder = new QOIEncoder({
+    channels: QOIChannels.RGBA,
+    width: Image.width,
+    height: Image.height,
+    colorspace: QOIColorSpace.SRGB,
+  });
 
   const inputStream = Streamify(rgba_raw);
   const outputStream = inputStream.pipe(encoder);

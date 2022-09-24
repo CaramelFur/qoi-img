@@ -56,7 +56,7 @@ export class QOIDecoder extends Transform {
   private state: any;
 
   constructor(channels?: QOIChannels) {
-    super({});
+    super();
     this.state = addon.createDecodeState(channels ?? 0);
   }
 
@@ -85,14 +85,19 @@ export class QOIDecoder extends Transform {
 export class QOIEncoder extends Transform {
   private state: any;
 
-  constructor(
-    width: number,
-    height: number,
-    channels: QOIChannels,
-    colorspace: QOIColorSpace = QOIColorSpace.SRGB,
-  ) {
-    super({});
-    this.state = addon.createEncodeState(width, height, channels, colorspace);
+  constructor(options: {
+    width: number;
+    height: number;
+    channels: QOIChannels;
+    colorspace?: QOIColorSpace;
+  }) {
+    super();
+    this.state = addon.createEncodeState(
+      options.width,
+      options.height,
+      options.channels,
+      options.colorspace ?? QOIColorSpace.SRGB,
+    );
   }
 
   _transform(chunk: Buffer, encoding: string, callback: Function) {
