@@ -1,9 +1,9 @@
-import { Transform } from 'stream';
+import { Readable, Transform } from 'stream';
 import {
   QOIAddonType,
   QOIChannels,
   QOIColorSpace,
-  QOIStreamState
+  QOIStreamState,
 } from './addon';
 export * from './addon';
 
@@ -54,6 +54,7 @@ export function IsQOI(data: Buffer): boolean {
 
 export class QOIDecoder extends Transform {
   private state: any;
+  private hasEmittedInfo = false;
 
   constructor(channels?: QOIChannels) {
     super();
@@ -63,6 +64,14 @@ export class QOIDecoder extends Transform {
   _transform(chunk: Buffer, encoding: string, callback: Function) {
     try {
       const result = addon.streamDecode(this.state, chunk);
+      if (!this.hasEmittedInfo) {
+        const status = addon.readDecodeState(this.state);
+        if (status.state !== QOIStreamState.QOIS_STATE_HEADER) {
+          this.emit('info', status);
+          this.hasEmittedInfo = true;
+        }
+      }
+
       callback(null, result);
     } catch (e) {
       callback(e as Error);
@@ -77,6 +86,25 @@ export class QOIDecoder extends Transform {
     callback();
   }
 
+  pipe<T extends NodeJS.WritableStream>(
+    destination: T,
+    options?: { end?: boolean; sendSharpMetadata?: boolean },
+  ): T {
+    if (options?.sendSharpMetadata) {
+      this.once('info', (info) => {
+        const d = destination as any;
+        if (!d || !d?.options || !d?.options?.input) return;
+        d.options.input.rawWidth = info.width;
+        d.options.input.rawHeight = info.height;
+        d.options.input.rawChannels = info.channels;
+        d.options.input.rawDepth = 'uchar';
+        d.options.input.rawPremultiplied = false;
+      });
+    }
+
+    return super.pipe(destination, options);
+  }
+
   public getInfo() {
     return addon.readDecodeState(this.state);
   }
@@ -85,19 +113,22 @@ export class QOIDecoder extends Transform {
 export class QOIEncoder extends Transform {
   private state: any;
 
-  constructor(options: {
+  constructor(options?: {
     width: number;
     height: number;
     channels: QOIChannels;
     colorspace?: QOIColorSpace;
   }) {
     super();
+
     this.state = addon.createEncodeState(
-      options.width,
-      options.height,
-      options.channels,
-      options.colorspace ?? QOIColorSpace.SRGB,
+      options?.width ?? 0,
+      options?.height ?? 0,
+      options?.channels ?? 0,
+      options?.colorspace ?? QOIColorSpace.SRGB,
     );
+
+    this.once('pipe', this.onPipe.bind(this));
   }
 
   _transform(chunk: Buffer, encoding: string, callback: Function) {
@@ -115,6 +146,25 @@ export class QOIEncoder extends Transform {
       callback(new Error('QOI stream ended before encoding was done'));
     }
     callback();
+  }
+
+  private onPipe(src: Readable) {
+    src.once(
+      'info',
+      (info: {
+        width: number;
+        height: number;
+        channels: number;
+        colorspace?: number;
+      }) => {
+        this.state = addon.createEncodeState(
+          info.width,
+          info.height,
+          info.channels,
+          !!info.colorspace ? info.colorspace : QOIColorSpace.SRGB,
+        );
+      },
+    );
   }
 
   public getInfo() {
