@@ -87,6 +87,8 @@ console.log("Colorspace:", info.colorspace);
 
 ## Release notes
 
+* [v2.1.0]
+  * Add sharp integration for streams
 * [v2.0.0]
   * Added support for the streaming api
   * Updated qoixx

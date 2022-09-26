@@ -1,6 +1,6 @@
 {
   "name": "qoi-img",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Typescript bindings for QOI",
   "repository": "https://github.com/rubikscraft/qoi-img",
   "author": "Rubikscraft <contact@rubikscraft.nl>",
