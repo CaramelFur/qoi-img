@@ -1,6 +1,6 @@
 {
   "name": "qoi-img",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Typescript bindings for QOI",
   "repository": "https://github.com/rubikscraft/qoi-img",
   "author": "Rubikscraft <contact@rubikscraft.nl>",
@@ -34,16 +34,16 @@
   },
   "devDependencies": {
     "@jorgeferrero/stream-to-buffer": "^2.0.6",
-    "@types/jest": "^29.0.3",
-    "@types/node": "^18.7.19",
-    "babel-jest": "^29.0.3",
-    "jest": "^29.0.3",
-    "node-gyp": "^9.1.0",
-    "ts-jest": "^29.0.2",
-    "typescript": "^4.8.3"
+    "@types/jest": "^29.2.3",
+    "@types/node": "^18.11.9",
+    "babel-jest": "^29.3.1",
+    "jest": "^29.3.1",
+    "node-gyp": "^9.3.0",
+    "ts-jest": "^29.0.3",
+    "typescript": "^4.9.3"
   },
   "dependencies": {
     "bindings": "^1.5.0",
-    "node-gyp": "^9.1.0"
+    "node-gyp": "^9.3.0"
   }
 }

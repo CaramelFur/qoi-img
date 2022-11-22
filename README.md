@@ -28,7 +28,8 @@ function QOIencode(
 ### Decoding
 
 Decoding is just as easy. You can decode an image by using the `QOIDecode` function.
-You can also convert the image to either RGB or RGBA by setting the convertChannels parameter.
+If you leave the convertChannels parameter empty, the channels will automatically be inferred from the image.
+However if you set it to either `RGB` or `RGBA`, it will convert the image to the correct channels.
 
 ```js
 function QOIDecode(data: Buffer, convertChannels?: QOIChannels) => {
@@ -87,6 +88,9 @@ console.log("Colorspace:", info.colorspace);
 
 ## Release notes
 
+* [v2.1.1]
+  * Improve documentation
+  * Update dependencies
 * [v2.1.0]
   * Add sharp integration for streams
 * [v2.0.0]
