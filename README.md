@@ -88,6 +88,8 @@ console.log("Colorspace:", info.colorspace);
 
 ## Release notes
 
+* [v2.1.2]
+  * Fix build for MacOS and Windows
 * [v2.1.1]
   * Improve documentation
   * Update dependencies

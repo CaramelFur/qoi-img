@@ -124,7 +124,7 @@ export class QOIEncoder extends Transform {
     this.state = addon.createEncodeState(
       options?.width ?? 0,
       options?.height ?? 0,
-      options?.channels ?? 0,
+      options?.channels ?? 0 as QOIChannels,
       options?.colorspace ?? QOIColorSpace.SRGB,
     );
 
