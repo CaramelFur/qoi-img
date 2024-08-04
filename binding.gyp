@@ -4,10 +4,10 @@
             "target_name": "qoixx_addon",
             "sources": ["lib/qoi.cpp"],
             "cflags_cc": [
-                "-std=c++2a -O3 -Wall -Wextra -pedantic-errors -fexceptions"
+                "-std=c++2a -O3 -Wall -Wextra -pedantic-errors -fexceptions -Wno-template-id-cdtor"
             ],
             "cflags": [
-                "-O3 -Wall -Wextra -pedantic-errors -Wno-narrowing"
+                "-O3 -Wall -Wextra -pedantic-errors -Wno-narrowing -Wno-template-id-cdtor"
             ],
             "xcode_settings": {
                 "GCC_ENABLE_CPP_EXCEPTIONS": "YES",

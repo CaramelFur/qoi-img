@@ -17,7 +17,7 @@
 
 namespace qoi_node
 {
-  static void finalize_data(napi_env env, void *data, void *hint)
+  static void finalize_data(const napi_env__* env, void *data, void *hint)
   {
     free(data);
   }
